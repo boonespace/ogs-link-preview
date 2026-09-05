@@ -3,10 +3,20 @@
   var CARD_CLASS = 'ogs-link-preview-v3';
 
   if (window.__ogsLinkPreviewV3) {
+
+    /* 停止监听 */
+    if (window.__ogsLinkPreviewV3Observer) {
+      window.__ogsLinkPreviewV3Observer.disconnect();
+      window.__ogsLinkPreviewV3Observer = null;
+    }
+
     document.querySelectorAll('.' + CARD_CLASS).forEach(function(el){
       el.remove();
     });
+
     window.__ogsLinkPreviewV3 = false;
+    window.__ogsLinkPreviewV3Seen = {};
+
     console.log('OGS Preview V3: 已关闭');
     return;
   }
@@ -116,10 +126,18 @@
     document.head.appendChild(style);
   }
 
-  var links = document.querySelectorAll('.chat-line .body a[href]');
+  /*
+   * 全局记录已经处理过的 URL
+   * 这样新进入的消息也可以继续去重
+   */
   var seen = {};
 
-  links.forEach(function(a){
+  window.__ogsLinkPreviewV3Seen = seen;
+
+  /*
+   * 处理单个链接
+   */
+  function processLink(a){
 
     var url = a.href;
     var uniqueUrl = url.split('#')[0];
@@ -128,9 +146,12 @@
       return;
     }
 
-    seen[uniqueUrl] = true;
+    seen[uniqueUrl] = false;
 
-    if (a.parentElement.querySelector('.' + CARD_CLASS)) {
+    if (
+      a.parentElement &&
+      a.parentElement.querySelector('.' + CARD_CLASS)
+    ) {
       return;
     }
 
@@ -266,13 +287,78 @@
         '</div>';
 
     });
+  }
+
+  /*
+   * 扫描当前页面已有链接
+   */
+  function scanLinks(root){
+
+    var links;
+
+    if (root) {
+      links = root.querySelectorAll(
+        '.chat-line .body a[href]'
+      );
+    } else {
+      links = document.querySelectorAll(
+        '.chat-line .body a[href]'
+      );
+    }
+
+    links.forEach(function(a){
+      processLink(a);
+    });
+  }
+
+  /*
+   * 先处理当前已有消息
+   */
+  scanLinks();
+
+  /*
+   * 监听 OGS 新增聊天消息
+   */
+  var observer = new MutationObserver(function(mutations){
+
+    mutations.forEach(function(mutation){
+
+      mutation.addedNodes.forEach(function(node){
+
+        if (node.nodeType !== 1) {
+          return;
+        }
+
+        /*
+         * 新增节点本身可能就是 chat-line，
+         * 或者 chat-line 在它的子节点中
+         */
+        if (
+          node.matches &&
+          node.matches('.chat-line')
+        ) {
+          scanLinks(node);
+        } else {
+          scanLinks(node);
+        }
+
+      });
+
+    });
 
   });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+
+  window.__ogsLinkPreviewV3Observer = observer;
 
   console.log(
     'OGS Preview V3:',
     Object.keys(seen).length,
-    '个链接已处理'
+    '个链接已处理，已开启实时监听'
   );
 
 })();
