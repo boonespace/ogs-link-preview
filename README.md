@@ -1,5 +1,7 @@
 # OGS Link Preview Bookmarklet
 
+[English](./README.md) | [简体中文](./README_CN.md)
+
 Add rich link preview cards to [Online Go (OGS)](https://online-go.com/) chat without modifying the OGS source code.
 
 The bookmarklet automatically detects URLs in OGS chat messages and inserts a preview card directly after the original URL.

@@ -1,5 +1,7 @@
 # OGS 链接预览 Bookmarklet
 
+[English](./README.md) | [简体中文](./README_CN.md)
+
 无需修改 [Online Go (OGS)](https://online-go.com/) 源代码，即可为 OGS 聊天中的链接添加丰富的链接预览卡片。
 
 该 Bookmarklet 会自动检测 OGS 聊天消息中的 URL，并在原始 URL 后面直接插入预览卡片。
